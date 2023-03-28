@@ -1,0 +1,44 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "untitled.json",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "": {
+            "scaleInEditor": 0.5
+        },
+        "untitled.json": {
+            "scale": 1,
+            "selectedLayer": -1,
+            "viewCenter": {
+                "x": 477.5,
+                "y": 415
+            }
+        },
+        "untitled.json#tiles": {
+            "scaleInDock": 1,
+            "scaleInEditor": 0.5
+        },
+        "untitled.tmx#tiles": {
+            "scaleInEditor": 0.5
+        }
+    },
+    "last.exportedFilePath": "D:/Escola/2022-2023/(s2) Tecnologias Multimédia/phaser_pasta/trabalho/assets",
+    "last.imagePath": "D:/Escola/2022-2023/(s2) Tecnologias Multimédia/phaser_pasta/trabalho/assets",
+    "map.height": 31,
+    "map.lastUsedExportFilter": "CSV files (*.csv)",
+    "map.lastUsedFormat": "json",
+    "map.width": 31,
+    "openFiles": [
+        "untitled.json"
+    ],
+    "project": "untitled.tiled-project",
+    "property.type": "bool",
+    "recentFiles": [
+        "untitled.json"
+    ],
+    "tileset.embedInMap": true
+}
