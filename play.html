@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PLAY</title>
+    <meta name="keywords" content="zombies, maze">
+    <meta name="description" content="free game">
+    <meta http-equiv="refresh" content="30">
+    <meta name="author" content="Carolina Garrido, Diogo Marques">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+    <style>
+        html {
+            background-color: #0f1600;
+            border-color :#00ff00;
+            border-top-style: dashed;
+            border-bottom-style: dashed;
+            border-right-style: solid;
+            border-left-style: solid;
+            border-width: 10px;
+            text-align: center;
+            padding-top: 5px;
+            padding-right: 5px;
+            padding-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        var config = {
+            type: Phaser.CANVAS,
+            width: 800,
+            height: 670,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 }
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+    
+        var game = new Phaser.Game(config);
+        
+        var map;
+        var tileset;
+        var layer;
+        var tilesize = 32;
+        
+        var player;
+        var playerSpeed = 150;
+        var cursors;
+    
+        var zombies;
+        var mines;
+        var treasures;
+        var exits;
+        var helps;
+    
+        function preload ()
+        {
+            this.load.image('tiles', 'assets/textures32.png');
+            this.load.tilemapTiledJSON('untitled', 'assets/untitled.json');
+            this.load.image('starSmile', 'assets/starSmile.png')
+            
+        }
+    
+        function create ()
+        {
+            map = this.make.tilemap({key: 'untitled'})
+            tileset = map.addTilesetImage('tiles', 'tiles');
+            layer = map.createLayer('layer', tileset);
+    
+            map.setCollisionByProperty({ collides: true });
+    
+    
+            player = this.physics.add.sprite(-16+32* 5, -16+32* 5, 'starSmile');
+            player.setOrigin(0.5,0.5)
+            this.physics.add.collider(player, layer)
+    
+            cursors = this.input.keyboard.createCursorKeys();
+    
+            
+            this.cameras.main.setSize(800,600);
+            this.cameras.main.setPosition(0,70);
+            this.cameras.main.setBounds(0, 0, layer.width, layer.height);
+            this.cameras.main.startFollow(player, false, 1, 1);
+            this.cameras.main.roundPixels = true;
+    
+        //    this.minimap = this.cameras.add(100, 100, 200, 200).setZoom(0.1).setName('mini');
+        //    this.minimap.setBackgroundColor(0x000000);
+        //    this.minimap.scrollX = 1600;
+        //    this.minimap.scrollY = 300;
+        }
+    
+        function update (time, delta)
+        {
+            //snapToGrid(player.body);
+            moveToGrid(player.body, playerSpeed)
+            movePlayer()
+        }
+    
+        function snapToGrid(body){
+            if(body.velocity.x == 0){
+                body.x = Phaser.Math.RoundTo(body.x / tilesize, 0) * tilesize;
+            }
+            if(body.velocity.y == 0){
+                body.y = Phaser.Math.RoundTo(body.y / tilesize, 0) * tilesize;
+            }
+        }
+        function moveToGrid(body,speed){
+            var xGrid = Phaser.Math.RoundTo(body.x / tilesize, 0) * tilesize;
+            var yGrid = Phaser.Math.RoundTo(body.y / tilesize, 0) * tilesize;
+    
+            var xPixelsToGrid = body.x - xGrid;
+            var yPixelsToGrid = body.y - yGrid;
+    
+            /*
+            se estiver a mover para longe do centro do tile,
+            e não se estiver a mover para o centro do tile
+                move-se em direção ao centro do tile
+                se este movimento o fizesse passar do centro do tile
+                    move-se diretamente para o centro do tile
+            */
+            if(cursors.up.isUp){
+    
+            }
+            if(cursors.down.isUp){
+                
+            }
+            if(cursors.left.isUp){
+                
+            }
+            if(cursors.right.isUp){
+                if (body.velocity.x > 0 && xPixelsToGrid > 0)
+                if(xPixelsToGrid)
+                if(body.x > xGrid){
+    
+                }
+            }
+            
+            if(body.velocity.y == 0){
+            }
+        }
+    
+        //ver se a personagem pode andar para o tile que está nesta direção (à esquerda, etc.)
+        function checkDirection(entity, direction){
+            var relativeX=entity.body.x;
+            var relativeY=entity.body.y;
+    
+            if(direction == Phaser.LEFT) relativeX -= tilesize;
+            if(direction == Phaser.RIGHT) relativeX += tilesize;
+            if(direction == Phaser.UP) relativeY -= tilesize;
+            if(direction == Phaser.DOWN) relativeY += tilesize;
+    
+            if(getTileAtWorldXY(relativeX,relativeY).properties[0]){
+    
+            }
+        }
+        //mover a personagem numa direção
+        function movePlayer(){
+            var speedX = 0, speedY =0
+            var speed = playerSpeed;
+            if(cursors.up.isDown) speedY -= speed;
+            if(cursors.down.isDown) speedY += speed;
+            if(cursors.left.isDown) speedX -= speed;
+            if(cursors.right.isDown) speedX += speed;
+            player.body.setVelocity(speedX, speedY);
+        }
+    
+    </script>
+</body>
+</html>
