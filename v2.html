@@ -109,8 +109,8 @@
             //    this.minimap.setBackgroundColor(0x000000);
             //    this.minimap.scrollX = 1600;
             //    this.minimap.scrollY = 300;
-            
-            hud = this.cameras.add(0,0,800, 70).setScroll(0,-70).setName('hud');
+
+            hud = this.cameras.add(0, 0, 800, 70).setScroll(0, -70).setName('hud');
             text = this.add.text(4, -66, 'balls', { font: '34px Courier', fill: '#ff6600' });
 
         }
@@ -120,10 +120,10 @@
                 //snapToGrid(player[0].body)
                 movePlayer()
 
-                
+
                 text.setText([
-                    'vidas: '+hearts,
-                    'score: '+score
+                    'vidas: ' + hearts,
+                    'score: ' + score
                 ]);
             } else {
                 return
@@ -207,7 +207,7 @@
         }
 
         function hitLandmine(player, landmine) {
-            landmine.disableBody(true,true);
+            landmine.disableBody(true, true);
 
             hearts--;
         }
