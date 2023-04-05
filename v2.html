@@ -168,8 +168,9 @@
 
             //se estiver próximo do centro do tile, parar
             //se não, continuar a mover
-            //se estiver parado, fora do centro do tile, sem velocidade, sem input
-            //snap to grid
+            //se estiver parado, fora do centro do tile, sem velocidade, e sem input, dá snap to grid
+            //OU
+            //se estiver a mover-se para longe do centro e não tiver input, snap to grid
             /*
             if(speedX == 0){
                 if(Math.abs((player[0].x % tilesize) - (tilesize/2)) > (tilesize/8)){
