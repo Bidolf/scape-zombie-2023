@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>PLAY</title>
@@ -8,11 +9,11 @@
     <meta http-equiv="refresh" content="30">
     <meta name="author" content="Carolina Garrido, Diogo Marques">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
     <style>
         html {
             background-color: #0f1600;
-            border-color :#00ff00;
+            border-color: #00ff00;
             border-top-style: dashed;
             border-bottom-style: dashed;
             border-right-style: solid;
@@ -25,6 +26,7 @@
         }
     </style>
 </head>
+
 <body>
     <script type="module">
         var config = {
@@ -34,7 +36,8 @@
             physics: {
                 default: 'arcade',
                 arcade: {
-                    gravity: { y: 0 }
+                    gravity: { y: 0 },
+                    debug: true
                 }
             },
             scene: {
@@ -43,127 +46,145 @@
                 update: update
             }
         };
-    
+
         var game = new Phaser.Game(config);
-        
+
         var map;
         var tileset;
         var layer;
         var tilesize = 32;
-        
+
         var player;
         //player é uma array
         //0 - o objeto em si
         //1 - a velocidade máxima do jogador
         //2 - Phaser.Point 
         var cursors;
-    
+
         var zombies;
         var mines;
         var treasures;
         var exits;
         var helps;
-    
-        function preload ()
-        {
+
+        //var text;
+
+        function preload() {
             this.load.image('tiles', 'assets/textures32.png');
             this.load.tilemapTiledJSON('untitled', 'assets/untitled.json');
             this.load.image('twink', 'assets/twink.png')
-            
+
         }
-    
-        function create ()
-        {
-            map = this.make.tilemap({key: 'untitled'})
+
+        function create() {
+            map = this.make.tilemap({ key: 'untitled' })
             tileset = map.addTilesetImage('tiles', 'tiles');
             layer = map.createLayer('layer', tileset);
-    
+
             map.setCollisionByProperty({ collides: true });
-    
+
             //ao criar o jogador ou zombies, criamos uma array
             //1º elemento é a sprite
             //2º elemento é a velocidade desta criatura
-            player = [this.physics.add.sprite(-16+32* 5, -16+32* 5, 'twink'), 150];
-            player[0].setOrigin(0.5,0.5)
+            player = [this.physics.add.sprite(-16 + 32 * 5, -16 + 32 * 5, 'twink'), 150];
+            player[0].setOrigin(0.5)
             this.physics.add.collider(player, layer)
-    
+
             cursors = this.input.keyboard.createCursorKeys();
-    
-            
-            this.cameras.main.setSize(800,600);
-            this.cameras.main.setPosition(0,70);
+
+
+            this.cameras.main.setSize(800, 600);
+            this.cameras.main.setPosition(0, 70);
             this.cameras.main.setBounds(0, 0, layer.width, layer.height);
             this.cameras.main.startFollow(player[0], false, 1, 1);
             this.cameras.main.roundPixels = true;
-    
-        //    this.minimap = this.cameras.add(100, 100, 200, 200).setZoom(0.1).setName('mini');
-        //    this.minimap.setBackgroundColor(0x000000);
-        //    this.minimap.scrollX = 1600;
-        //    this.minimap.scrollY = 300;
+
+            //    this.minimap = this.cameras.add(100, 100, 200, 200).setZoom(0.1).setName('mini');
+            //    this.minimap.setBackgroundColor(0x000000);
+            //    this.minimap.scrollX = 1600;
+            //    this.minimap.scrollY = 300;
+
+            //    text = this.add.text(100, 100, '', { font: '64px Courier', fill: '#00ff00' });
+
         }
-    
-        function update (time, delta)
-        {
+
+        function update(time, delta) {
+            //snapToGrid(player[0].body)
             movePlayer()
+
+            /*
+            text.setText([
+                'velX: '+player[0].body.velocity.x,
+                'posX: '+player[0].x/tilesize,
+                player[0].x%tilesize
+            ]);
+            */
         }
-        
-    
+
+
+        /*
         function snapToGrid(body){
             if(body.velocity.x == 0){
-                body.x = Phaser.Math.RoundTo(body.x / tilesize, 0) * tilesize;
+                body.center.x = Phaser.Math.RoundTo(body.center.x / tilesize, 0) * tilesize;
             }
             if(body.velocity.y == 0){
-                body.y = Phaser.Math.RoundTo(body.y / tilesize, 0) * tilesize;
+                body.center.y = Phaser.Math.RoundTo(body.center.y / tilesize, 0) * tilesize;
             }
         }
-        
-    
+        */
+
+
         //ver se a personagem pode andar para o tile que está nesta direção (à esquerda, etc.)
-        function checkDirection(entity, direction){
-            var relativeX=entity.body.x;
-            var relativeY=entity.body.y;
-    
-            if(direction == Phaser.LEFT) relativeX -= tilesize;
-            if(direction == Phaser.RIGHT) relativeX += tilesize;
-            if(direction == Phaser.UP) relativeY -= tilesize;
-            if(direction == Phaser.DOWN) relativeY += tilesize;
-    
-            if(getTileAtWorldXY(relativeX,relativeY).properties[0]){
-    
+        function checkDirection(entity, direction) {
+            var relativeX = entity.body.x;
+            var relativeY = entity.body.y;
+
+            if (direction == Phaser.LEFT) relativeX -= tilesize;
+            if (direction == Phaser.RIGHT) relativeX += tilesize;
+            if (direction == Phaser.UP) relativeY -= tilesize;
+            if (direction == Phaser.DOWN) relativeY += tilesize;
+
+            if (getTileAtWorldXY(relativeX, relativeY).properties[0]) {
+
             }
         }
         //mover a personagem numa direção
-        function movePlayer(){
-            var speedX = 0, speedY =0
+        function movePlayer() {
+            var speedX = 0, speedY = 0
             var speed = player[1];
-            if(cursors.up.isDown) speedY -= speed;
-            if(cursors.down.isDown) speedY += speed;
-            if(cursors.left.isDown) speedX -= speed;
-            if(cursors.right.isDown) speedX += speed;
-            
+            if (cursors.up.isDown) speedY -= speed;
+            if (cursors.down.isDown) speedY += speed;
+            if (cursors.left.isDown) speedX -= speed;
+            if (cursors.right.isDown) speedX += speed;
+
             //se estiver próximo do centro do tile, parar
             //se não, continuar a mover
+            //se estiver parado, fora do centro do tile, sem velocidade, sem input
+            //snap to grid
+            /*
             if(speedX == 0){
-                if((Math.abs((player[0].body.x % tilesize) - tilesize/2)) < (tilesize/2.5)){
+                if(Math.abs((player[0].x % tilesize) - (tilesize/2)) > (tilesize/8)){
                     speedX = player[0].body.velocity.x;
                 }else{
                     speedX = 0;
-                    player[0].body.x = Phaser.Math.RoundTo(player[0].body.x / tilesize, 0) * tilesize;
+                    player[0].x = Phaser.Math.RoundTo(player[0].x/tilesize +0.5) *tilesize;
                 }
             }
             
             if(speedY == 0){
-                if((Math.abs((player[0].body.y % tilesize) - tilesize/2)) < (tilesize/2.5)){
+                if((Math.abs((player[0].body.y % tilesize) - tilesize/2)) < (tilesize/3)){
                     speedY = player[0].body.velocity.y;
                 }else{
                     speedY = 0;
                     player[0].body.y = Phaser.Math.RoundTo(player[0].body.y / tilesize, 0) * tilesize;
                 }
             }
-            
-            player[0].setVelocity(speedX,speedY);
+            */
+
+            player[0].setVelocity(speedX, speedY);
         }
-    
+
     </script>
 </body>
+
 </html>
