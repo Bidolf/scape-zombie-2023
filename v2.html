@@ -90,7 +90,6 @@
 
     function update (time, delta)
     {
-        //snapToGrid(player[0].body)
         movePlayer()
     }
     
@@ -131,7 +130,7 @@
         //se estiver próximo do centro do tile, parar
         //se não, continuar a mover
         if(speedX == 0){
-            if((Math.abs((player[0].body.x % tilesize) - tilesize/2)) < (tilesize/3)){
+            if((Math.abs((player[0].body.x % tilesize) - tilesize/2)) < (tilesize/2.5)){
                 speedX = player[0].body.velocity.x;
             }else{
                 speedX = 0;
@@ -140,7 +139,7 @@
         }
         
         if(speedY == 0){
-            if((Math.abs((player[0].body.y % tilesize) - tilesize/2)) < (tilesize/3)){
+            if((Math.abs((player[0].body.y % tilesize) - tilesize/2)) < (tilesize/2.5)){
                 speedY = player[0].body.velocity.y;
             }else{
                 speedY = 0;
