@@ -56,7 +56,7 @@
 
         var hud
         var hearts = 3;
-        var score = 0;
+        var coinsCollected = 0;
 
         var gameOver = false;
         var text;
@@ -86,11 +86,14 @@
 
             cursors = this.input.keyboard.createCursorKeys();
 
+            coins = this.physics.add.group(map.createFromObjects('coins',{key:'orb',classType: Phaser.Physics.Arcade.Sprite}));
+            /*
             coins = this.physics.add.group({
                 key: 'orb',
                 repeat: 11,
                 setXY: { x: 80, y: 80, stepX: 64 }
             });
+            */
             this.physics.add.overlap(player, coins, collectCoin, null, this);
 
             landmines = this.physics.add.group({
@@ -124,7 +127,7 @@
 
                 text.setText([
                     'vidas: ' + hearts,
-                    'score: ' + score
+                    'moedas restantes: ' + coins.countActive(true)
                 ]);
             } else {
                 return
@@ -204,8 +207,6 @@
 
                 });
             }
-
-            score++;
         }
 
         function hitLandmine(player, landmine) {
