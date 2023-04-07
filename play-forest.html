@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>=PLAY=FOREST=</title>
+    <meta name="keywords" content="zombies, maze">
+    <meta name="description" content="free game">
+    <meta http-equiv="refresh" content="30">
+    <meta name="author" content="Carolina Garrido, Diogo Marques">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+
+    <style>
+        body {
+            background-color: #000000;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        var config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 700,
+            physics: {
+                default: "arcade",
+                arcade: {
+                    debug: true,
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update,
+            }
+        };
+        let game = new Phaser.Game(config);
+
+        function preload() {
+            this.load.image("tile1", "assets/new/hyptosis_tile-art-batch-1.png");
+            this.load.image("tile2", "assets/new/twilight-tiles.png");
+            this.load.tilemapTiledJSON("map", "mapa1.json");
+            this.load.spritesheet('idle', 'assets/spritesheets/2 walk.png', { frameWidth: 16, frameHeight: 16 });
+        }
+        function create() {
+            const map = this.make.tilemap({ key: "map", tileWidth: 16, tileHeight: 16 });
+            const tileset1 = map.addTilesetImage("hyptosis_tile-art-batch-1", "tile1");
+            const tileset2 = map.addTilesetImage("twilight-tiles", "tile2");
+            const layer2 = map.createLayer("camada2false", [tileset1, tileset2], 0, 0);
+            const layer1 = map.createLayer("camada1true", [tileset1, tileset2], 0, 0);
+            const layer3 = map.createLayer("camada3true", [tileset1, tileset2], 0, 0);
+            this.idle = this.physics.add.sprite(300, 300, "idle");
+            //this.idle.setScale(1.3);
+            //criar colisoes precisas no tales e importar para o jogo(se der tempo)
+            //https://www.youtube.com/watch?v=J-0qjYATwiQ&ab_channel=PabloPirata
+
+            this.anims.create({
+                key: 'walk',
+                frames: [
+                    { key: 'idle', frame: 0 },
+                    { key: 'idle', frame: 3 },
+                    { key: 'idle', frame: 6 },
+                    { key: 'idle', frame: 9 }
+                ],
+                frameRate: 8,
+                repeat: -1
+            });
+            this.anims.create({
+                key: 'turn',
+                frames: [
+                    { key: 'idle', frame: 1 },
+                    { key: 'idle', frame: 4 },
+                    { key: 'idle', frame: 7 },
+                    { key: 'idle', frame: 10 }
+                ],
+                frameRate: 8,
+                repeat: -1
+            });
+            this.anims.create({
+                key: 'right',
+                frames: [
+                    { key: 'idle', frame: 2 },
+                    { key: 'idle', frame: 5 },
+                    { key: 'idle', frame: 8 },
+                    { key: 'idle', frame: 11 }
+                ],
+                frameRate: 8,
+                repeat: -1
+            });
+            layer1.setCollisionByExclusion([-1]);
+            layer3.setCollisionByExclusion([-1]);
+            this.physics.add.collider(this.idle, layer1);
+            this.physics.add.collider(this.idle, layer3);
+            this.cursorKeys = this.input.keyboard.createCursorKeys();
+
+
+            var staticGroup = this.add.group();
+            var scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '16px Courier', fill: '#ff6600' });
+            staticGroup.add(scoreText);
+            staticGroup.children.iterate(function (child) {
+                child.setScrollFactor(0);
+            });
+
+
+            this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+            this.cameras.main.startFollow(this.idle);
+            this.cameras.main.setScroll(0, 0);
+            this.cameras.main.setZoom(2);
+
+
+        }
+        function update() {
+            if (this.cursorKeys.left.isDown) {
+                this.idle.setVelocityX(-200);
+                this.idle.setVelocityY(0);
+                this.idle.flipX = true;
+                this.idle.anims.play('right', true);
+            }
+            else if (this.cursorKeys.right.isDown) {
+                this.idle.setVelocityX(200);
+                this.idle.setVelocityY(0);
+                this.idle.flipX = false;
+                this.idle.anims.play('right', true);
+            }
+            else if (this.cursorKeys.up.isDown) {
+                this.idle.setVelocityY(-200);
+                this.idle.setVelocityX(0);
+                this.idle.anims.play('turn', true);
+            }
+            else if (this.cursorKeys.down.isDown) {
+                this.idle.setVelocityY(200);
+                this.idle.setVelocityX(0);
+                this.idle.anims.play('walk', true);
+            }
+            else {
+                this.idle.setVelocityX(0);
+                this.idle.setVelocityY(0);
+                this.idle.anims.stop();
+            }
+
+        }
+
+    </script>
+</body>
+
+</html>

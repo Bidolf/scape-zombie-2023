@@ -3,19 +3,23 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>===TP1===</title>
+    <title>=PLAY=CAVE=</title>
+    <meta name="keywords" content="zombies, maze">
+    <meta name="description" content="free game">
+    <meta name="author" content="Carolina Garrido, Diogo Marques">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
-    <style type="text/css">
+
+    <style>
         body {
-            margin: 0;
+            background-color: #000000;
+            text-align: center;
         }
     </style>
 </head>
 
 <body>
-
     <script type="module">
-        //mmm
         var config = {
             type: Phaser.CANVAS,
             width: 800,
@@ -23,8 +27,7 @@
             physics: {
                 default: 'arcade',
                 arcade: {
-                    gravity: { y: 0 },
-                    debug: true
+                    debug: false
                 }
             },
             scene: {
@@ -55,12 +58,16 @@
         var exits;
         var helps;
 
-        var hud
-        var hearts = 3;
+        var cameraMain;
+        var cameraHud;
+        var maxHearts = 3;
+        var hearts = maxHearts;
         var coinsRemaining;
+        var coinsCollected = 0;
 
         var gameOver = false;
         var text;
+        var rect;
 
         function preload() {
             this.load.image('tiles', 'assets/textures32.png');
@@ -90,8 +97,9 @@
             //ao criar o jogador, criamos uma array
             //1º elemento é a sprite
             //2º elemento é a velocidade desta criatura
-            player = [this.physics.add.sprite(playerSpawn.x, playerSpawn.y, 'twink'), 300];
+            player = [this.physics.add.sprite(playerSpawn.x, playerSpawn.y, 'twink'), 160];
             player[0].setOrigin(0.5)
+            player[0].body.setAllowDrag(true).setDrag(500).setFriction(0)
             this.physics.add.collider(player, layer)
             this.physics.add.overlap(player, playerSpawn, reachSpawn);
             playerSpawn.disableBody(true, true);
@@ -126,26 +134,27 @@
                 }));
             this.physics.add.collider(player, landmines, hitLandmine);
 
-
-            this.cameras.main.setSize(800, 600);
-            this.cameras.main.setPosition(0, 70);
-            this.cameras.main.setBounds(0, 0, layer.width, layer.height);
-            this.cameras.main.startFollow(player[0], false, 1, 1);
-            this.cameras.main.roundPixels = true;
+            cameraMain = this.cameras.main
+            cameraMain.setSize(800, 600);
+            cameraMain.setPosition(0, 70);
+            cameraMain.setBounds(0, 0, layer.width, layer.height);
+            cameraMain.startFollow(player[0], false, 1, 1);
+            cameraMain.roundPixels = true;
 
             //    this.minimap = this.cameras.add(100, 100, 200, 200).setZoom(0.1).setName('mini');
             //    this.minimap.setBackgroundColor(0x000000);
             //    this.minimap.scrollX = 1600;
             //    this.minimap.scrollY = 300;
 
-            hud = this.cameras.add(0, 0, 800, 70).setScroll(0, -70).setName('hud');
-            text = this.add.text(4, -66, 'balls', { font: '34px Courier', fill: '#ff6600' });
+            cameraHud = this.cameras.add(0, 0, 800, 70).setScroll(0, -70).setName('hud');
+            text = this.add.text(4, -66, 'lorem ipsum', { font: '34px Courier', fill: '#fa0' });
+            rect = this.add.rectangle(0, -300, 800, 100, 0xbb0000).setScrollFactor(0).setDepth(10)
 
         }
 
         function update(time, delta) {
             if (!gameOver) {
-                //snapToGrid(player[0].body)
+
                 movePlayer()
 
                 coinsRemaining = coins.countActive(true)
@@ -161,10 +170,15 @@
                     ]);
                 }
             } else {
-                return
+                rect.setPosition(400,300)
+                text.setScrollFactor(0).setAlign('center').setPosition(400, 300).setColor('#fff').setDepth(20).setOrigin(0.5)
+                text.setText([
+                    'GAME OVER',
+                    'Apanhaste ' + coinsCollected + ' moedas',
+                    '\'F5\' para começar de novo'
+                ]);
             }
         }
-
 
         /*
         function snapToGrid(body){
@@ -201,6 +215,16 @@
             if (cursors.left.isDown) speedX -= speed;
             if (cursors.right.isDown) speedX += speed;
 
+            if (speedX != 0 && speedY != 0) {
+                speedX = speedX * 0.8;
+                speedY = speedY * 0.8;
+                player[0].setVelocity(speedX, speedY);
+            } else if (speedX != 0) {
+                player[0].setVelocityX(speedX);
+            } else if (speedY != 0) {
+                player[0].setVelocityY(speedY);
+            }
+
             //se estiver próximo do centro do tile, parar
             //se não, continuar a mover
             //se estiver parado, fora do centro do tile, sem velocidade, e sem input, dá snap to grid
@@ -226,7 +250,6 @@
             }
             */
 
-            player[0].setVelocity(speedX, speedY);
         }
 
         function collectCoin(player, coin) {
@@ -234,12 +257,20 @@
             if (coins.countActive(true) === 0) {
                 playerSpawn.enableBody(false, playerSpawn.x, playerSpawn.y, true, true)
             }
+            coinsCollected++
         }
 
         function hitLandmine(player, landmine) {
             landmine.disableBody(true, true);
+            cameraMain.shake(100, 0.008);
+            takeDamage();
+        }
 
+        function takeDamage() {
             hearts--;
+            if (hearts == 0) {
+                gameOver = true;
+            }
         }
 
         function reachSpawn(player, playerSpawn) {
@@ -252,6 +283,7 @@
                 playerSpawn.disableBody(true, true);
             }
         }
+
 
     </script>
 
