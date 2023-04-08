@@ -14,12 +14,12 @@
             "scale": 1,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 494.5,
-                "y": 493
+                "x": 410.5,
+                "y": 442
             }
         },
         "untitled.json#tiles": {
-            "scaleInDock": 1,
+            "scaleInDock": 0.75,
             "scaleInEditor": 0.5
         },
         "untitled.tmx#tiles": {
