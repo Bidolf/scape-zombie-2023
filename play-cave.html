@@ -54,7 +54,7 @@
         var cursors;
 
         var zombies;
-        const baseZombieSpeed = 50;
+        const baseZombieSpeed = 40;
         var zombieSpeed = baseZombieSpeed;
         var landmines;
         var coins;
@@ -72,6 +72,10 @@
         var text;
         var rect;
 
+        var sfxCoin;
+        var sfxHitLight;
+        var sfxHitHeavy;
+
         function preload() {
             this.load.image('tiles', 'assets/textures32.png');
             this.load.tilemapTiledJSON('untitled', 'assets/untitled.json');
@@ -79,8 +83,12 @@
             this.load.image('orb', 'assets/orb.png')
             this.load.spritesheet('coin', 'assets/coin.png', { frameWidth: 16 })
             this.load.image('bomb', 'assets/bomb.png');
-            this.load.spritesheet('human', 'assets/charsprites/char1.png', { frameWidth: 16, frameHeight: 16 })
-            this.load.spritesheet('zombie', 'assets/charsprites/4 walk.png', { frameWidth: 16, frameHeight: 16 })
+            this.load.spritesheet('human', 'assets/spritesheets/2 walk.png', { frameWidth: 16, frameHeight: 16 })
+            this.load.spritesheet('dead-player', 'assets/spritesheets/3 idle.png', { frameWidth: 16, frameHeight: 16 })
+            this.load.spritesheet('zombie', 'assets/spritesheets/4 walk.png', { frameWidth: 16, frameHeight: 16 })
+            this.load.audio('getCoin', 'assets/sounds/grab_coin.mp3');
+            this.load.audio('hitLight', 'assets/sounds/hit_light.mp3');
+            this.load.audio('hitHeavy', 'assets/sounds/hit_heavy.mp3');
         }
 
         function create() {
@@ -90,6 +98,9 @@
 
             map.setCollisionByProperty({ collides: true });
 
+            sfxCoin = this.sound.add('getCoin');
+            sfxHitLight = this.sound.add('hitLight');
+            sfxHitHeavy = this.sound.add('hitHeavy');
 
             //vai buscar o spawn do ficheiro do mapa
             playerSpawn = this.physics.add.existing(
@@ -111,8 +122,7 @@
             this.anims.create({
                 key: 'idle',
                 frames: [
-                    { key: 'human', frame: 0 },
-                    { key: 'human', frame: 3 }
+                    { key: 'human', frame: 0 }
                 ],
                 frameRate: 1,
                 repeat: -1
@@ -120,10 +130,10 @@
             this.anims.create({
                 key: 'walk-down',
                 frames: [
+                    { key: 'human', frame: 0 },
+                    { key: 'human', frame: 3 },
                     { key: 'human', frame: 6 },
-                    { key: 'human', frame: 9 },
-                    { key: 'human', frame: 12 },
-                    { key: 'human', frame: 15 }
+                    { key: 'human', frame: 9 }
                 ],
                 frameRate: 8,
                 repeat: -1
@@ -131,10 +141,10 @@
             this.anims.create({
                 key: 'walk-up',
                 frames: [
+                    { key: 'human', frame: 1 },
+                    { key: 'human', frame: 4 },
                     { key: 'human', frame: 7 },
-                    { key: 'human', frame: 10 },
-                    { key: 'human', frame: 13 },
-                    { key: 'human', frame: 16 }
+                    { key: 'human', frame: 10 }
                 ],
                 frameRate: 8,
                 repeat: -1
@@ -142,12 +152,21 @@
             this.anims.create({
                 key: 'walk-right',
                 frames: [
+                    { key: 'human', frame: 2 },
+                    { key: 'human', frame: 5 },
                     { key: 'human', frame: 8 },
-                    { key: 'human', frame: 11 },
-                    { key: 'human', frame: 14 },
-                    { key: 'human', frame: 17 }
+                    { key: 'human', frame: 11 }
                 ],
                 frameRate: 8,
+                repeat: -1
+            });
+            this.anims.create({
+                key: 'player-zombie',
+                frames: [
+                    { key: 'dead-player', frame: 0 },
+                    { key: 'dead-player', frame: 3 }
+                ],
+                frameRate: 4,
                 repeat: -1
             });
 
@@ -160,7 +179,6 @@
                 frameRate: 10,
                 repeat: -1
             });
-
             coins = this.physics.add.group(
                 map.createFromObjects('coins', {
                     key: 'coin',
@@ -170,6 +188,15 @@
             coins.children.iterate(coin => {
                 coin.play('spin')
             })
+
+
+            landmines = this.physics.add.group(
+                map.createFromObjects('landmines', {
+                    key: 'bomb',
+                    classType: Phaser.Physics.Arcade.Sprite
+                }));
+            this.physics.add.collider(player, landmines, hitLandmine);
+
 
             this.physics.add.overlap(player, coins, collectCoin);
 
@@ -182,44 +209,45 @@
             this.physics.add.overlap(player, zombies, hitZombie);
             this.physics.add.collider(zombies, layer, redirectZombie)
 
-            zombies.children.iterate(zombie => {
-                zombie.setOrigin(0.5, 0.5)
-                var direction = Math.floor(Math.random() * 4);
-                switch (direction) {
-                    case 0: //esquerda
-                        moveZombie(zombie, Phaser.LEFT, zombieSpeed)
-                        break;
-                    case 1: //cima
-                        moveZombie(zombie, Phaser.UP, zombieSpeed)
-                        break;
-                    case 2: //direita
-                        moveZombie(zombie, Phaser.RIGHT, zombieSpeed)
-                        break;
-                    case 3: //baixo
-                        moveZombie(zombie, Phaser.DOWN, zombieSpeed)
-                        break;
-                }
-            })
-
             this.anims.create({
-                key: 'walk-right',
+                key: 'z-walk-down',
+                frames: [
+                    { key: 'zombie', frame: 0 },
+                    { key: 'zombie', frame: 3 },
+                    { key: 'zombie', frame: 6 },
+                    { key: 'zombie', frame: 9 }
+                ],
+                frameRate: 4,
+                repeat: -1
+            });
+            this.anims.create({
+                key: 'z-walk-up',
+                frames: [
+                    { key: 'zombie', frame: 1 },
+                    { key: 'zombie', frame: 4 },
+                    { key: 'zombie', frame: 7 },
+                    { key: 'zombie', frame: 10 }
+                ],
+                frameRate: 4,
+                repeat: -1
+            });
+            this.anims.create({
+                key: 'z-walk-right',
                 frames: [
                     { key: 'zombie', frame: 2 },
                     { key: 'zombie', frame: 5 },
                     { key: 'zombie', frame: 8 },
                     { key: 'zombie', frame: 11 }
                 ],
-                frameRate: 6,
+                frameRate: 4,
                 repeat: -1
             });
 
+            zombies.children.iterate(zombie => {
+                zombie.setOrigin(0.5, 0.5)
+                redirectZombie(zombie)
+            })
 
-            landmines = this.physics.add.group(
-                map.createFromObjects('landmines', {
-                    key: 'bomb',
-                    classType: Phaser.Physics.Arcade.Sprite
-                }));
-            this.physics.add.collider(player, landmines, hitLandmine);
 
             cameraMain = this.cameras.main
             cameraMain.setSize(800, 600);
@@ -227,6 +255,7 @@
             cameraMain.setBounds(0, 0, layer.width, layer.height);
             cameraMain.startFollow(player[0], false, 1, 1);
             cameraMain.roundPixels = true;
+            //cameraMain.setZoom(0.5,0.5)
 
             //    this.minimap = this.cameras.add(100, 100, 200, 200).setZoom(0.1).setName('mini');
             //    this.minimap.setBackgroundColor(0x000000);
@@ -235,7 +264,7 @@
 
             cameraHud = this.cameras.add(0, 0, 800, 70).setScroll(0, -70).setName('hud');
             text = this.add.text(4, -66, 'lorem ipsum', { font: '34px Courier', fill: '#fa0' });
-            rect = this.add.rectangle(0, -300, 800, 100, 0xbb0000).setScrollFactor(0).setDepth(10)
+            rect = this.add.rectangle(0, -500, 800, 100, 0xbb0000).setScrollFactor(0).setDepth(10)
 
         }
 
@@ -256,6 +285,31 @@
                         'Apanhaste todas! Volta ao centro!'
                     ]);
                 }
+
+                //mais uma vida
+                this.input.keyboard.on('keyup-A', function (event) {
+                    hearts++
+                    this.input.keyboard.stopListeners();
+                });
+                //reset velocidade do jogador
+                this.input.keyboard.on('keyup-S', function (event) {
+                    player[1] = basePlayerSpeed;
+                    this.input.keyboard.stopListeners();
+                });
+                //aumentar velocidade dos zombies
+                this.input.keyboard.on('keyup-D', function (event) {
+                    zombieSpeed += 5
+                    this.input.keyboard.stopListeners();
+                });
+                //apanhar todas as moedas
+                this.input.keyboard.on('keyup-F', function (event) {
+                    coins.children.iterate(function (child) {
+                        child.disableBody(true, true);
+                        playerSpawn.enableBody(false, playerSpawn.x, playerSpawn.y, true, true)
+                    });
+                    this.input.keyboard.stopListeners();
+                });
+
             } else {
                 rect.setPosition(400, 300)
                 text.setScrollFactor(0).setAlign('center').setPosition(400, 300).setColor('#fff').setDepth(20).setOrigin(0.5)
@@ -264,33 +318,6 @@
                     'Apanhaste ' + coinsCollected + ' moedas',
                     '\'F5\' para começar de novo'
                 ]);
-            }
-        }
-
-        /*
-        function snapToGrid(body){
-            if(body.velocity.x == 0){
-                body.center.x = Phaser.Math.RoundTo(body.center.x / tilesize, 0) * tilesize;
-            }
-            if(body.velocity.y == 0){
-                body.center.y = Phaser.Math.RoundTo(body.center.y / tilesize, 0) * tilesize;
-            }
-        }
-        */
-
-
-        //ver se a personagem pode andar para o tile que está nesta direção (à esquerda, etc.)
-        function checkDirection(entity, direction) {
-            var relativeX = entity.body.x;
-            var relativeY = entity.body.y;
-
-            if (direction == Phaser.LEFT) relativeX -= tilesize;
-            if (direction == Phaser.RIGHT) relativeX += tilesize;
-            if (direction == Phaser.UP) relativeY -= tilesize;
-            if (direction == Phaser.DOWN) relativeY += tilesize;
-
-            if (getTileAtWorldXY(relativeX, relativeY).properties[0]) {
-
             }
         }
 
@@ -352,17 +379,30 @@
 
         }
         function moveZombie(zombie, direction, speed) {
-            if (direction == Phaser.LEFT)
+
+            if (direction == Phaser.LEFT) {
                 zombie.setVelocity(-speed, 0)
-            else if (direction == Phaser.UP)
+                zombie.flipX = true;
+                zombie.play('z-walk-right', true);
+            }
+            else if (direction == Phaser.UP) {
                 zombie.setVelocity(0, -speed)
-            else if (direction == Phaser.RIGHT)
+                zombie.play('z-walk-up', true);
+            }
+            else if (direction == Phaser.RIGHT) {
                 zombie.setVelocity(+speed, 0)
-            else if (direction == Phaser.DOWN)
+                zombie.flipX = false;
+                zombie.play('z-walk-right', true);
+            }
+            else if (direction == Phaser.DOWN) {
                 zombie.setVelocity(0, +speed)
+                zombie.play('z-walk-down', true);
+            }
         }
 
         function collectCoin(player, coin) {
+            sfxCoin.play()
+
             coin.disableBody(true, true);
             if (coins.countActive(true) === 0) {
                 playerSpawn.enableBody(false, playerSpawn.x, playerSpawn.y, true, true)
@@ -371,26 +411,36 @@
         }
 
         function hitLandmine(player, landmine) {
+            sfxHitLight.play();
+
             landmine.disableBody(true, true);
-            cameraMain.shake(100, 0.008);
+            cameraMain.shake(200, 0.008);
             takeDamage();
         }
 
         function hitZombie(human, zombie) {
+            sfxHitHeavy.play();
+
             zombie.disableBody(true, true);
-            cameraMain.shake(150, 0.012);
+            cameraMain.shake(300, 0.012);
             takeDamage();
-            player[1] -= 10;
+            player[1] -= 5;
         }
 
         function takeDamage() {
             hearts--;
-            if (hearts == 0) {
+            if (hearts == -1) {
                 gameOver = true;
+                player[0].disableBody(true,false)
+                player[0].play('player-zombie', true)
+                sfxHitHeavy.play();
             }
         }
 
         function reachSpawn(player, playerSpawn) {
+            player[1] = basePlayerSpeed;
+            hearts++;
+            zombieSpeed += 5
             if (coins.countActive(true) === 0) {
                 coins.children.iterate(function (child) {
 

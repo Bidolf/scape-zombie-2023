@@ -11,15 +11,18 @@
             "scaleInEditor": 0.5
         },
         "untitled.json": {
+            "expandedGroupLayers": [
+                14
+            ],
             "scale": 0.75,
-            "selectedLayer": 2,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 508.66666666666674,
-                "y": 589.3333333333334
+                "x": 650.6666666666666,
+                "y": 468
             }
         },
         "untitled.json#tiles": {
-            "scaleInDock": 0.75,
+            "scaleInDock": 0.25,
             "scaleInEditor": 0.5
         },
         "untitled.tmx#tiles": {
