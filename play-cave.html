@@ -48,10 +48,14 @@
         //player é uma array
         //0 - o objeto em si
         //1 - a velocidade máxima do jogador
+        const basePlayerSpeed = 160;
+        const basePlayerDecceleration = 550;
         var playerSpawn;
         var cursors;
 
         var zombies;
+        const baseZombieSpeed = 50;
+        var zombieSpeed = baseZombieSpeed;
         var landmines;
         var coins;
         var exits;
@@ -75,8 +79,8 @@
             this.load.image('orb', 'assets/orb.png')
             this.load.spritesheet('coin', 'assets/coin.png', { frameWidth: 16 })
             this.load.image('bomb', 'assets/bomb.png');
-            this.load.spritesheet('human', 'assets/charsprites/char1.png',{ frameWidth: 16, frameHeight: 16 })
-            this.load.spritesheet('zombie', 'assets/charsprites/4 walk.png',{ frameWidth: 16, frameHeight: 16 })
+            this.load.spritesheet('human', 'assets/charsprites/char1.png', { frameWidth: 16, frameHeight: 16 })
+            this.load.spritesheet('zombie', 'assets/charsprites/4 walk.png', { frameWidth: 16, frameHeight: 16 })
         }
 
         function create() {
@@ -97,9 +101,9 @@
             //ao criar o jogador, criamos uma array
             //1º elemento é a sprite
             //2º elemento é a velocidade desta criatura
-            player = [this.physics.add.sprite(playerSpawn.x, playerSpawn.y, 'human'), 160];
+            player = [this.physics.add.sprite(playerSpawn.x, playerSpawn.y, 'human'), basePlayerSpeed];
             player[0].setOrigin(0.5)
-            player[0].body.setAllowDrag(true).setDrag(550).setFriction(0)
+            player[0].body.setAllowDrag(true).setDrag(basePlayerDecceleration).setFriction(0)
             this.physics.add.collider(player, layer)
             this.physics.add.overlap(player, playerSpawn, reachSpawn);
             playerSpawn.disableBody(true, true);
@@ -174,8 +178,29 @@
                     key: 'zombie',
                     classType: Phaser.Physics.Arcade.Sprite
                 }));
-            
+
             this.physics.add.overlap(player, zombies, hitZombie);
+            this.physics.add.collider(zombies, layer, redirectZombie)
+
+            zombies.children.iterate(zombie => {
+                zombie.setOrigin(0.5, 0.5)
+                var direction = Math.floor(Math.random() * 4);
+                switch (direction) {
+                    case 0: //esquerda
+                        moveZombie(zombie, Phaser.LEFT, zombieSpeed)
+                        break;
+                    case 1: //cima
+                        moveZombie(zombie, Phaser.UP, zombieSpeed)
+                        break;
+                    case 2: //direita
+                        moveZombie(zombie, Phaser.RIGHT, zombieSpeed)
+                        break;
+                    case 3: //baixo
+                        moveZombie(zombie, Phaser.DOWN, zombieSpeed)
+                        break;
+                }
+            })
+
             this.anims.create({
                 key: 'walk-right',
                 frames: [
@@ -219,8 +244,6 @@
 
                 movePlayer()
 
-                moveZombies()
-
                 coinsRemaining = coins.countActive(true)
                 if (coinsRemaining > 0) {
                     text.setText([
@@ -234,7 +257,7 @@
                     ]);
                 }
             } else {
-                rect.setPosition(400,300)
+                rect.setPosition(400, 300)
                 text.setScrollFactor(0).setAlign('center').setPosition(400, 300).setColor('#fff').setDepth(20).setOrigin(0.5)
                 text.setText([
                     'GAME OVER',
@@ -280,18 +303,18 @@
             if (cursors.left.isDown) speedX -= speed;
             if (cursors.right.isDown) speedX += speed;
 
-            if(speedY < 0){
-                player[0].play('walk-up',true);
-            }else if(speedY > 0){
-                player[0].play('walk-down',true);
-            }else  if(speedX < 0){
+            if (speedY < 0) {
+                player[0].play('walk-up', true);
+            } else if (speedY > 0) {
+                player[0].play('walk-down', true);
+            } else if (speedX < 0) {
                 player[0].flipX = true;
-                player[0].play('walk-right',true);
-            }else  if(speedX > 0){
+                player[0].play('walk-right', true);
+            } else if (speedX > 0) {
                 player[0].flipX = false;
-                player[0].play('walk-right',true);
-            }else{
-                player[0].play('idle',true);
+                player[0].play('walk-right', true);
+            } else {
+                player[0].play('idle', true);
             }
 
             if (speedX != 0 && speedY != 0) {
@@ -305,10 +328,38 @@
             }
         }
 
-        function moveZombies(){
-            zombies.children.iterate(zombie => {
+        function redirectZombie(zombie, layer) {
+            zombie.x = Math.floor((zombie.x) / tilesize) * tilesize + tilesize / 2;
+            zombie.y = Math.floor((zombie.y) / tilesize) * tilesize + tilesize / 2;
 
-            })
+            var options = [];
+            if (map.getTileAtWorldXY(zombie.x - tilesize, zombie.y).collides == false)
+                options.push(Phaser.LEFT);
+
+            if (map.getTileAtWorldXY(zombie.x, zombie.y - tilesize).collides == false)
+                options.push(Phaser.UP);
+
+            if (map.getTileAtWorldXY(zombie.x + tilesize, zombie.y).collides == false)
+                options.push(Phaser.RIGHT);
+
+            if (map.getTileAtWorldXY(zombie.x, zombie.y + tilesize).collides == false)
+                options.push(Phaser.DOWN);
+
+            moveZombie(
+                zombie,
+                options[Math.floor(Math.random() * options.length)],
+                zombieSpeed)
+
+        }
+        function moveZombie(zombie, direction, speed) {
+            if (direction == Phaser.LEFT)
+                zombie.setVelocity(-speed, 0)
+            else if (direction == Phaser.UP)
+                zombie.setVelocity(0, -speed)
+            else if (direction == Phaser.RIGHT)
+                zombie.setVelocity(+speed, 0)
+            else if (direction == Phaser.DOWN)
+                zombie.setVelocity(0, +speed)
         }
 
         function collectCoin(player, coin) {
