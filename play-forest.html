@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>=PLAY=FOREST=</title>
+    <title>PLAY</title>
     <meta name="keywords" content="zombies, maze">
     <meta name="description" content="free game">
-    <meta http-equiv="refresh" content="30">
     <meta name="author" content="Carolina Garrido, Diogo Marques">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
-
     <style>
         body {
             background-color: #000000;
@@ -20,130 +17,536 @@
 </head>
 
 <body>
-    <script>
-        var config = {
-            type: Phaser.AUTO,
-            width: 800,
-            height: 700,
-            physics: {
-                default: "arcade",
-                arcade: {
-                    debug: true,
+<script>
+    let config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 700,
+        physics:{
+            default:"arcade",
+            arcade:{
+                debug:false,
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update,
+        }
+    };
+
+    //totalcoins =126
+    //totalzombies=143
+    //totalbombs=112
+    let game = new Phaser.Game(config);
+    let score;
+    let numbscore=0;//score
+    let lives;
+    let numblives=5;//numero de vidas
+    let text;
+    let numbenemy=140;//numero de zombies a eliminar do total
+    let numbcoins=125;//numero de coins a eliminar do total
+    let numbbombs=108;//numero de bombs a eliminar do total
+    let orb;
+    let orbtext;
+    let cointext;
+    let heart;
+    let bomb;
+    let idle;
+    let enemy;//group enemy
+    let coins;//group coins
+    let bombs;//group bombs
+    let badlayers;//group badlayer
+    let badlayerszombie;//group zombiebadlayers
+    let gameinfo;//group gameinfo
+    let cameraMain;
+
+    let nivel=0;//definir nivel [0..143]
+    let count;
+
+    let gameover=false;
+    let avoidLayerzombie;
+
+    let timer;
+    let zombietimer;
+    let distance;
+
+
+    let retangulo1;
+    let text1;
+    let retangulo;
+    let numberr;
+
+    let map;
+
+    let velocidadeIdle=200;//velocidade idle
+    let velocidadeZombie=150;//velocidade zombie
+    let maxZombies=20;
+
+
+
+
+
+    function preload() {
+        this.load.image("tile1", "assetsmapa1/new/hyptosis_tile-art-batch-1.png");
+        this.load.image("tile2", "assetsmapa1/new/twilight-tiles.png");
+        this.load.image("tile3", "assetsmapa1/new/hyptosis_tile-art-batch-3.png");
+        this.load.tilemapTiledJSON("map","assetsmapa1/mapa1.json");
+        this.load.spritesheet('zombie','assetsmapa1/spritesheets/3 walk.png', {frameWidth:16,frameHeight:16});
+        this.load.spritesheet('idle','assetsmapa1/spritesheets/2 walk.png', {frameWidth:16,frameHeight:16});
+        this.load.spritesheet('coin', 'assetsmapa1/diogocoins/coin.png', { frameWidth: 16,frameHeight:16 })
+        this.load.image('heart', 'assetsmapa1/diogocoins/heart.png');
+        this.load.image('orb', 'assetsmapa1/diogocoins/orb-blue1.png');
+        this.load.image('bomb', 'assetsmapa1/diogocoins/bomb.png');
+
+    }
+    function create() {
+        map = this.make.tilemap({ key: "map", tileWidth: 16, tileHeight: 16});
+        const tileset1 = map.addTilesetImage("hyptosis_tile-art-batch-1","tile1");
+        const tileset2 = map.addTilesetImage("twilight-tiles","tile2");
+        const tileset3 = map.addTilesetImage("hyptosis_tile-art-batch-3","tile3");
+        const layer2 = map.createLayer("camada2false", [tileset1,tileset2,tileset3],0,20);
+        const layer1 = map.createLayer("camada1true", [tileset1,tileset2,tileset3],0,20);
+        const layer3 = map.createLayer("camada3true", [tileset1,tileset2,tileset3],0,20);
+        const layer4 = map.createLayer("camada4bomb", [tileset1,tileset2,tileset3],0,20);
+        idle=this.physics.add.sprite(593,200,"idle");
+        orb=this.physics.add.sprite(593,200,"orb");
+        orbtext=this.physics.add.sprite(780,9,"orb");
+        cointext=this.physics.add.sprite(132,9,"coin");
+        heart=this.add.image(258,9,"heart");
+        orbtext.disableBody(true, true);
+        orb.disableBody(true, true);
+        heart.setScale(0.8);
+        let avoidLayer = this.add.group();
+        avoidLayer.add(layer1);
+        avoidLayer.add(layer3);
+        avoidLayer.children.iterate(function(child) {
+            child.setCollisionByExclusion([-1]);
+        });
+        avoidLayerzombie = this.add.group();
+        avoidLayerzombie.add(layer1);
+        avoidLayerzombie.add(layer3);
+        avoidLayerzombie.add(layer4);
+        avoidLayerzombie.children.iterate(function(child) {
+            child.setCollisionByExclusion([-1]);
+        });
+
+        //coin
+        this.anims.create({
+            key: 'spin',
+            frames: [
+                { key: 'coin',frame:0 },
+                { key: 'coin',frame:1 },
+                { key: 'coin',frame:2 },
+                { key: 'coin',frame:3 }
+            ],
+            frameRate: 5,
+            repeat: -1
+        });
+        cointext.anims.play('spin', true);
+        //idle
+        this.anims.create({
+            key: 'walk',
+            frames: [
+                { key: 'idle',frame:0 },
+                { key: 'idle',frame:3 },
+                { key: 'idle',frame:6 },
+                { key: 'idle',frame:9 }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'turn',
+            frames: [
+                { key: 'idle',frame:1 },
+                { key: 'idle',frame:4 },
+                { key: 'idle',frame:7 },
+                { key: 'idle',frame:10 }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'right',
+            frames: [
+                { key: 'idle',frame:2 },
+                { key: 'idle',frame:5 },
+                { key: 'idle',frame:8 },
+                { key: 'idle',frame:11 }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+        this.physics.add.collider(idle, avoidLayer);
+        idle.body.setAllowDrag(true).setDrag(550,550).setFriction(0,0);
+
+        //zombie
+        enemy = this.physics.add.group(
+            map.createFromObjects('spawn', {
+                key: 'zombie',
+                classType: Phaser.Physics.Arcade.Sprite
+            }));
+        this.anims.create({
+            key: 'walk1',
+            frames: [
+                { key: 'zombie',frame:0 },
+                { key: 'zombie',frame:3 },
+                { key: 'zombie',frame:6 },
+                { key: 'zombie',frame:9 }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'turn1',
+            frames: [
+                { key: 'zombie',frame:1 },
+                { key: 'zombie',frame:4 },
+                { key: 'zombie',frame:7 },
+                { key: 'zombie',frame:10 }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'right1',
+            frames: [
+                { key: 'zombie',frame:2 },
+                { key: 'zombie',frame:5 },
+                { key: 'zombie',frame:8 },
+                { key: 'zombie',frame:11 }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+        this.physics.add.collider(enemy, avoidLayerzombie, changedirection);
+
+        coins = this.physics.add.group(
+            map.createFromObjects('coins', {
+                key: 'coin',
+                classType: Phaser.Physics.Arcade.Sprite
+            }));
+        coins.children.iterate(function (child) {
+            child.anims.play('spin', true);
+        });
+        bombs = this.physics.add.group(
+            map.createFromObjects('bombs', {
+                key: 'bomb',
+                classType: Phaser.Physics.Arcade.Sprite
+            }));
+        badlayers = this.physics.add.group(
+            map.createFromObjects('badlayer', {
+                classType: Phaser.Physics.Arcade.Sprite
+            })
+        );
+        badlayers.children.iterate(function(child) {
+            child.setOrigin(0.5,-0.5);
+            child.y=child.y+20;
+            child.setAlpha(0.0001);
+        });
+        badlayerszombie = this.physics.add.group(
+            map.createFromObjects('zombiebadlayer', {
+                classType: Phaser.Physics.Arcade.Sprite
+            })
+        );
+        badlayerszombie.children.iterate(function(child) {
+            child.setOrigin(0.5,-0.5);
+            child.y=child.y+20;
+            child.setAlpha(0.0001);
+        });
+
+
+        this.cursorKeys = this.input.keyboard.createCursorKeys();
+
+        retangulo = this.add.graphics();
+        retangulo.fillStyle(0x000000, 1);
+        retangulo.fillRect(0, 0, map.widthInPixels,20);
+        score = this.add.text(10, 0, 'score:', { fontSize: '16px Courier', fill: '#ffffff' });
+        lives = this.add.text(200, 0, 'lives: 5', { fontSize: '16px Courier', fill: '#ffffff' });
+        text= this.add.text(590, 3.3, '', { fontSize: '11px Courier', fill: '#ffffff' });
+        gameinfo = this.add.group();
+        gameinfo.add(score);
+        gameinfo.add(lives);
+        gameinfo.add(retangulo);
+        gameinfo.add(text);
+        gameinfo.add(heart);
+        gameinfo.add(orbtext);
+        gameinfo.add(cointext);
+        this.children.bringToTop(heart);
+        this.children.bringToTop(text);
+        this.children.bringToTop(orbtext);
+        this.children.bringToTop(cointext);
+        gameinfo.children.iterate(function(child) {
+            child.setScrollFactor(0);
+        });
+
+        cameraMain= this.cameras.main;
+        cameraMain.setBounds(0, 0, map.widthInPixels, map.heightInPixels+20);
+        cameraMain.startFollow(idle);
+        cameraMain.roundPixels = true;
+
+        if(enemy.getLength()>=numbenemy){
+            count=spawn(numbenemy,enemy);
+            console.log(enemy.getLength() +'.........'+ (enemy.getLength() - count));
+        }
+        if(coins.getLength()>=numbcoins) {
+            count=spawn(numbcoins, coins);
+            console.log(coins.getLength() +'.........'+ (coins.getLength() - count));
+        }
+        if(bombs.getLength()>=numbbombs) {
+            count=spawn(numbbombs, bombs);
+            console.log(bombs.getLength() +'.........'+ (bombs.getLength() - count));
+        }
+        console.log("NIVEL ->" +nivel);
+        walkzombies(enemy);
+
+        this.physics.add.overlap(idle,orb, respawn);
+        this.physics.add.overlap(idle,coins, deletecoin);
+        this.physics.add.overlap(idle,bombs, deletebomb);
+        this.physics.add.overlap(idle,badlayers, loselives);
+        this.physics.add.overlap(enemy,badlayerszombie, losezombie);
+        this.physics.add.overlap(idle,enemy, getinfected);
+
+        timer = this.time.addEvent({
+            delay: 5000,
+            callback: funcao,
+            callbackScope: this,
+            repeat: -1
+        });
+        function funcao() {
+            walkzombies(enemy);
+        }
+
+        zombietimer=this.time.addEvent({
+            delay: .5000,
+            callback: chaseplayer,
+            callbackScope: this,
+            repeat: -1
+        });
+        function chaseplayer() {
+            enemy.children.iterate(function(child) {
+                distance= Phaser.Math.Distance.Between(child.x, child.y, idle.x, idle.y);
+                if (distance < 150) {
+                    child.anims.play('walk1', true);
+                    child.scene.physics.moveToObject(child, idle, 100);
                 }
-            },
-            scene: {
-                preload: preload,
-                create: create,
-                update: update,
-            }
-        };
-        let game = new Phaser.Game(config);
-
-        function preload() {
-            this.load.image("tile1", "assets/new/hyptosis_tile-art-batch-1.png");
-            this.load.image("tile2", "assets/new/twilight-tiles.png");
-            this.load.tilemapTiledJSON("map", "mapa1.json");
-            this.load.spritesheet('idle', 'assets/spritesheets/2 walk.png', { frameWidth: 16, frameHeight: 16 });
+            });
         }
-        function create() {
-            const map = this.make.tilemap({ key: "map", tileWidth: 16, tileHeight: 16 });
-            const tileset1 = map.addTilesetImage("hyptosis_tile-art-batch-1", "tile1");
-            const tileset2 = map.addTilesetImage("twilight-tiles", "tile2");
-            const layer2 = map.createLayer("camada2false", [tileset1, tileset2], 0, 0);
-            const layer1 = map.createLayer("camada1true", [tileset1, tileset2], 0, 0);
-            const layer3 = map.createLayer("camada3true", [tileset1, tileset2], 0, 0);
-            this.idle = this.physics.add.sprite(300, 300, "idle");
-            //this.idle.setScale(1.3);
-            //criar colisoes precisas no tales e importar para o jogo(se der tempo)
-            //https://www.youtube.com/watch?v=J-0qjYATwiQ&ab_channel=PabloPirata
-
-            this.anims.create({
-                key: 'walk',
-                frames: [
-                    { key: 'idle', frame: 0 },
-                    { key: 'idle', frame: 3 },
-                    { key: 'idle', frame: 6 },
-                    { key: 'idle', frame: 9 }
-                ],
-                frameRate: 8,
-                repeat: -1
-            });
-            this.anims.create({
-                key: 'turn',
-                frames: [
-                    { key: 'idle', frame: 1 },
-                    { key: 'idle', frame: 4 },
-                    { key: 'idle', frame: 7 },
-                    { key: 'idle', frame: 10 }
-                ],
-                frameRate: 8,
-                repeat: -1
-            });
-            this.anims.create({
-                key: 'right',
-                frames: [
-                    { key: 'idle', frame: 2 },
-                    { key: 'idle', frame: 5 },
-                    { key: 'idle', frame: 8 },
-                    { key: 'idle', frame: 11 }
-                ],
-                frameRate: 8,
-                repeat: -1
-            });
-            layer1.setCollisionByExclusion([-1]);
-            layer3.setCollisionByExclusion([-1]);
-            this.physics.add.collider(this.idle, layer1);
-            this.physics.add.collider(this.idle, layer3);
-            this.cursorKeys = this.input.keyboard.createCursorKeys();
-
-
-            var staticGroup = this.add.group();
-            var scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '16px Courier', fill: '#ff6600' });
-            staticGroup.add(scoreText);
-            staticGroup.children.iterate(function (child) {
-                child.setScrollFactor(0);
-            });
-
-
-            this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-            this.cameras.main.startFollow(this.idle);
-            this.cameras.main.setScroll(0, 0);
-            this.cameras.main.setZoom(2);
-
-
-        }
-        function update() {
+    }
+    function update() {
+        if(!gameover) {
             if (this.cursorKeys.left.isDown) {
-                this.idle.setVelocityX(-200);
-                this.idle.setVelocityY(0);
-                this.idle.flipX = true;
-                this.idle.anims.play('right', true);
+                idle.setVelocityX(-velocidadeIdle);
+                idle.setVelocityY(0);
+                idle.flipX = true;
+                idle.anims.play('right', true);
+            } else if (this.cursorKeys.right.isDown) {
+                idle.setVelocityX(velocidadeIdle);
+                idle.setVelocityY(0);
+                idle.flipX = false;
+                idle.anims.play('right', true);
+            } else if (this.cursorKeys.up.isDown) {
+                idle.setVelocityY(-velocidadeIdle);
+                idle.setVelocityX(0);
+                idle.anims.play('turn', true);
+            } else if (this.cursorKeys.down.isDown) {
+                idle.setVelocityY(velocidadeIdle);
+                idle.setVelocityX(0);
+                idle.anims.play('walk', true);
+            } else {
+                idle.setVelocityX(0);
+                idle.setVelocityY(0);
+                idle.anims.stop();
             }
-            else if (this.cursorKeys.right.isDown) {
-                this.idle.setVelocityX(200);
-                this.idle.setVelocityY(0);
-                this.idle.flipX = false;
-                this.idle.anims.play('right', true);
-            }
-            else if (this.cursorKeys.up.isDown) {
-                this.idle.setVelocityY(-200);
-                this.idle.setVelocityX(0);
-                this.idle.anims.play('turn', true);
-            }
-            else if (this.cursorKeys.down.isDown) {
-                this.idle.setVelocityY(200);
-                this.idle.setVelocityX(0);
-                this.idle.anims.play('walk', true);
-            }
-            else {
-                this.idle.setVelocityX(0);
-                this.idle.setVelocityY(0);
-                this.idle.anims.stop();
-            }
+        }else {
+            idle.disableBody(true, true);
+            retangulo1 = this.add.graphics();
+            retangulo1.fillStyle(0x000000, 1);
+            retangulo1.fillRect(0,300, map.widthInPixels,100);
+            text1= this.add.text(305, 315, '', { fontSize: '20px Courier', fill: '#ffffff' });
+            text1.setText([
+                'GAME OVER',
+                'YOU CATCH ' +numbscore+ ' COINS',
+                '\'F5\' TO START AGAIN'
+            ]);
+            text1.setAlign('center');
+            text1.setScrollFactor(0);
+            retangulo1.setScrollFactor(0);
 
         }
+    }
 
-    </script>
+
+    function losezombie(zombie,layer) {
+        zombie.x=zombie.x-80;
+        zombie.y=zombie.y+430;
+    }
+    function getinfected(player,zombie){
+        zombie.disableBody(true, true);
+        cameraMain.shake(50, 0.012);
+        numblives--;
+        lives.setText(['lives: '+numblives]);
+        if(numblives===0) {
+            gameover=true;
+        }
+    }
+    function walkzombies(enemy){
+        enemy.children.iterate(function(child) {
+            randomdir(child,nivel);
+        });
+    }
+    function randomdir(zombi,nivel) {
+        switch (getRandomNumber(0, 4)) {
+            case 0: {
+                zombi.setVelocityX(-velocidadeZombie-nivel);
+                zombi.setVelocityY(0);
+                zombi.flipX = true;
+                zombi.anims.play('right1', true);
+                break;
+            }
+            case 1: {
+                zombi.setVelocityX(velocidadeZombie+nivel);
+                zombi.setVelocityY(0);
+                zombi.flipX = false;
+                zombi.anims.play('right1', true);
+                break;
+            }
+            case 2: {
+                zombi.setVelocityY(-velocidadeZombie-nivel);
+                zombi.setVelocityX(0);
+                zombi.anims.play('turn1', true);
+                break;
+            }
+            case 3: {
+                zombi.setVelocityY(velocidadeZombie+nivel);
+                zombi.setVelocityX(0);
+                zombi.anims.play('walk1', true);
+                break;
+            }
+        }
+    }
+    function changedirection(zombie,layer) {
+        if (zombie.anims.currentAnim.key === 'walk1') {
+            zombie.y = zombie.y-5;
+        } else if (zombie.anims.currentAnim.key === 'turn1') {
+            zombie.y = zombie.y+5;
+
+        } else if (zombie.anims.currentAnim.key === 'right1' && zombie.flipX) {
+            zombie.x = zombie.x+5;
+
+        } else if (zombie.anims.currentAnim.key === 'right1' && zombie.flipX === false) {
+            zombie.x = zombie.x-5;
+        }
+        randomdir(zombie,nivel);
+    }
+    function loselives(player,layer) {
+        cameraMain.shake(30, 0.05);
+        if (player.anims.currentAnim.key === 'walk') {
+            player.y=player.y-5;
+        }else if(player.anims.currentAnim.key === 'turn'){
+            player.y=player.y+5;
+        }else if(player.anims.currentAnim.key === 'right' && player.flipX) {
+            player.x=player.x+5;
+        }else if(player.anims.currentAnim.key === 'right' && player.flipX===false){
+            player.x=player.x-5;
+        }
+        numblives--;
+        lives.setText(['lives: '+numblives]);
+        if(numblives===0) {
+            gameover=true;
+        }
+    }
+    function deletebomb(player,bomb) {
+        bomb.disableBody(true, true);
+        cameraMain.shake(50, 0.012);
+        numblives--;
+        lives.setText(['lives: '+numblives]);
+        if(numblives===0) {
+            gameover=true;
+        }
+        if (bombs.countActive(true) === 0) {
+            bombs.children.iterate(function (child) {
+                child.enableBody(false, child.x, child.y, true, true);
+            });
+            count=spawn(numbbombs-nivel, bombs);
+        }
+
+    }
+    function deletecoin(player,coin) {
+        coin.disableBody(true, true);
+        if (coins.countActive(true) === 0) {
+            orb.enableBody(false, orb.x, orb.y, true, true)
+            orbtext.enableBody(false, orbtext.x, orbtext.y, true, true)
+            text.setText(["CONGRATULATIONS! FIND THIS -> "]);
+        }
+        numbscore++
+        score.setText(['score: '+numbscore]);
+    }
+    function respawn(player, orb) {
+        if(nivel%2===0){
+            numblives++;
+            lives.setText(['lives: '+numblives]);
+        }
+        else {
+            nivel++;
+        }
+        coins.children.iterate(function (child) {
+            child.enableBody(false, child.x, child.y, true, true);
+        });
+        count = spawn(numbcoins - nivel, coins);
+        enemy.children.iterate(function (child) {
+            child.enableBody(false, child.x, child.y, true, true);
+        });
+        if(enemy.getLength()-(numbenemy-nivel)<=maxZombies) {
+            count = spawn(numbenemy - nivel, enemy);
+        }else{
+            count = spawn(enemy.getLength()-maxZombies, enemy);
+        }
+        bombs.children.iterate(function (child) {
+            child.enableBody(false, child.x, child.y, true, true);
+        });
+        count=spawn(numbbombs-nivel, bombs);
+        walkzombies(enemy);
+        orb.disableBody(true, true);
+        orbtext.disableBody(true, true);
+        text.setText([""]);
+    }
+
+    function spawn(number,sprite) {
+        let i=0;
+        let enemyshow;
+        let randomnumber;
+        let arraycheck=[];
+        let a;
+        numberr=number;
+        for (a = 0; a < numberr; a++) {
+            randomnumber = getRandomNumber(0, sprite.getLength());
+            if (!isInArray(randomnumber, arraycheck)) {
+                enemyshow = sprite.getChildren()[randomnumber];
+                enemyshow.disableBody(true,true);
+                arraycheck.push(randomnumber);
+                i++;
+            }
+        }
+        return i;
+    }
+    function getRandomNumber(min, max) {
+        return Math.floor(Math.random() * (max - min) + min);
+    }
+    function isInArray(randomnumber, arraycheck) {
+        if (arraycheck.length === 0) {
+            return false;
+        } else {
+            for (let c = 0; c < arraycheck.length; c++) {
+                if (randomnumber === arraycheck[c]) {
+                    numberr++;
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+</script>
 </body>
-
 </html>

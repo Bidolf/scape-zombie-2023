@@ -77,22 +77,22 @@
         var sfxHitHeavy;
 
         function preload() {
-            this.load.image('tiles', 'assets/textures32.png');
-            this.load.tilemapTiledJSON('untitled', 'assets/untitled.json');
-            this.load.image('twink', 'assets/twink.png')
-            this.load.image('orb', 'assets/orb.png')
-            this.load.spritesheet('coin', 'assets/coin.png', { frameWidth: 16 })
-            this.load.image('bomb', 'assets/bomb.png');
-            this.load.spritesheet('human', 'assets/spritesheets/2 walk.png', { frameWidth: 16, frameHeight: 16 })
-            this.load.spritesheet('dead-player', 'assets/spritesheets/3 idle.png', { frameWidth: 16, frameHeight: 16 })
-            this.load.spritesheet('zombie', 'assets/spritesheets/4 walk.png', { frameWidth: 16, frameHeight: 16 })
-            this.load.audio('getCoin', 'assets/sounds/grab_coin.mp3');
-            this.load.audio('hitLight', 'assets/sounds/hit_light.mp3');
-            this.load.audio('hitHeavy', 'assets/sounds/hit_heavy.mp3');
+            this.load.image('tiles', 'assetsmapa2/sprites/textures32.png');
+            this.load.tilemapTiledJSON('mapa2', 'assetsmapa2/mapa2.json');
+            this.load.image('twink', 'assetsmapa2/sprites/twink.png')
+            this.load.image('orb', 'assetsmapa2/sprites/orb.png')
+            this.load.spritesheet('coin', 'assetsmapa2/sprites/coin.png', { frameWidth: 16 })
+            this.load.image('bomb', 'assetsmapa2/sprites/bomb.png');
+            this.load.spritesheet('human', 'assetsmapa2/spritesheets/2 walk.png', { frameWidth: 16, frameHeight: 16 })
+            this.load.spritesheet('dead-player', 'assetsmapa2/spritesheets/3 idle.png', { frameWidth: 16, frameHeight: 16 })
+            this.load.spritesheet('zombie', 'assetsmapa2/spritesheets/4 walk.png', { frameWidth: 16, frameHeight: 16 })
+            this.load.audio('getCoin', 'assetsmapa2/sounds/grab_coin.mp3');
+            this.load.audio('hitLight', 'assetsmapa2/sounds/hit_light.mp3');
+            this.load.audio('hitHeavy', 'assetsmapa2/sounds/hit_heavy.mp3');
         }
 
         function create() {
-            map = this.make.tilemap({ key: 'untitled' })
+            map = this.make.tilemap({ key: 'mapa2' })
             tileset = map.addTilesetImage('tiles', 'tiles');
             layer = map.createLayer('layer', tileset);
 
