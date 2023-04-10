@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PLAY</title>
+    <title>=PLAY=FOREST=</title>
     <meta name="keywords" content="zombies, maze">
     <meta name="description" content="free game">
     <meta name="author" content="Carolina Garrido, Diogo Marques">
@@ -360,6 +360,9 @@
                 }
             });
         }
+
+        
+        sfxCoin.play()
     }
     function update() {
         if(!gameover) {
@@ -534,6 +537,8 @@
         score.setText(['score: '+numbscore]);
     }
     function respawn(player, orb) {
+        
+        sfxCoin.play()
         numblives++;
         nivel++;
         lives.setText(['lives: ' + numblives]);
