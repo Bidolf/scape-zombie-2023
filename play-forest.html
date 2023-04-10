@@ -120,8 +120,8 @@
         idle=this.physics.add.sprite(593,200,"idle");
         orb=this.physics.add.sprite(593,200,"orb");
         orbtext=this.physics.add.sprite(780,9,"orb");
-        cointext=this.physics.add.sprite(132,9,"coin");
-        heart=this.add.image(258,9,"heart");
+        cointext=this.physics.add.sprite(92,9,"coin");
+        heart=this.add.image(264,9,"heart");
         orbtext.disableBody(true, true);
         orb.disableBody(true, true);
         heart.setScale(0.8);
@@ -390,7 +390,7 @@
             retangulo1 = this.add.graphics();
             retangulo1.fillStyle(0x000000, 1);
             retangulo1.fillRect(0,300, map.widthInPixels,100);
-            text1= this.add.text(305, 315, '', { fontSize: '20px Courier', fill: '#ffffff' });
+            text1= this.add.text(300, 315, '', { fontSize: '20px Courier', fill: '#ffffff' });
             text1.setText([
                 'GAME OVER',
                 'YOU CAUGHT ' +numbscore+ ' COINS',

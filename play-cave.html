@@ -66,7 +66,7 @@
         const maxZombies = 68
         const maxBombs = 54;
         const maxCoins = 20;
-        var nivel = 5
+        var nivel = 3
 
         var cameraMain;
         var cameraHud;
@@ -294,9 +294,9 @@
 
             iconOrb = this.physics.add.sprite(780, -11, "orb");
             iconOrb.setVisible(false);
-            iconCoin = this.physics.add.sprite(132, -11, "coin");
+            iconCoin = this.physics.add.sprite(92, -11, "coin");
             iconCoin.play('spin');
-            iconHeart = this.add.image(258, -11, "heart");
+            iconHeart = this.add.image(264, -11, "heart");
             iconHeart.setScale(0.8)
 
             textScore = this.add.text(10, -20, 'score:', { fontSize: '16px Courier', fill: '#ffffff' });
@@ -352,7 +352,6 @@
                 this.input.keyboard.on('keyup-F', function (event) {
                     coins.children.iterate(function (child) {
                         child.disableBody(true, true);
-                        score++;
                     });
                     enableSpawn();
                     this.input.keyboard.stopListeners();
@@ -362,7 +361,7 @@
                 rect = this.add.graphics();
                 rect.fillStyle(0x000000, 1);
                 rect.fillRect(0, 300, map.widthInPixels, 100);
-                text = this.add.text(305, 315, '', { fontSize: '20px Courier', fill: '#ffffff' });
+                text = this.add.text(300, 315, '', { fontSize: '20px Courier', fill: '#ffffff' });
                 text.setText([
                     'GAME OVER',
                     'YOU CAUGHT ' + score + ' COINS',
