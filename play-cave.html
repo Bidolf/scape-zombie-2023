@@ -38,7 +38,8 @@
         };
 
         var game = new Phaser.Game(config);
-
+//coins - 20
+//bombs -54
         var map;
         var tileset;
         var layer;
@@ -60,10 +61,12 @@
         var coins;
         var exits;
         var helps;
+        const numbcoins=19;
+        const numbbombs=53;
         const maxZombies = 68
-        const maxBombs = 32
-        const maxCoins = 20
-        var nivel = 0
+        const maxBombs = 54;
+        const maxCoins = 20;
+        var nivel = 5
 
         var cameraMain;
         var cameraHud;
@@ -88,6 +91,9 @@
         var sfxHitLight;
         var sfxHitHeavy;
 
+        
+        let count;
+
         function preload() {
             this.load.image('tiles', 'assetsmapa2/sprites/textures32.png');
             this.load.tilemapTiledJSON('mapa2', 'assetsmapa2/mapa2.json');
@@ -98,8 +104,8 @@
             this.load.spritesheet('dead-player', 'assetsmapa2/spritesheets/3 idle.png', { frameWidth: 16, frameHeight: 16 })
             this.load.spritesheet('zombie', 'assetsmapa2/spritesheets/4 walk.png', { frameWidth: 16, frameHeight: 16 })
 
-            this.load.image('heart', 'assetsmapa1/diogocoins/heart.png');
-            this.load.image('orb', 'assetsmapa1/diogocoins/orb-blue1.png');
+            this.load.image('heart', 'assetsmapa1/sprites/heart.png');
+            this.load.image('orb', 'assetsmapa1/sprites/orb-blue1.png');
 
             this.load.audio('getCoin', 'assetsmapa2/sounds/grab_coin.mp3');
             this.load.audio('hitLight', 'assetsmapa2/sounds/hit_light.mp3');
@@ -213,9 +219,28 @@
                     classType: Phaser.Physics.Arcade.Sprite
                 }));
             this.physics.add.collider(player, bombs, hitBomb);
-
-
             this.physics.add.overlap(player, coins, collectCoin);
+
+
+
+            if (coins.getLength() >= (numbcoins - nivel)) {
+                if (coins.getLength() - (numbcoins - nivel) <= maxCoins) {
+                    count = spawn(numbcoins - nivel, coins);
+                } else {
+                    count = spawn(coins.getLength() - maxCoins, coins);
+                }
+                console.log(coins.getLength() + '.........' + (coins.getLength() - count));
+            }
+            if (bombs.getLength() >= (numbbombs - nivel)) {
+                if (bombs.getLength() - (numbbombs - nivel) <= maxBombs) {
+                    count = spawn(numbbombs - nivel, bombs);
+                } else {
+                    count = spawn(bombs.getLength() - numbbombs, bombs);
+                }
+                console.log(bombs.getLength() + '.........' + (bombs.getLength() - count));
+            }
+
+
 
             zombies = this.physics.add.group(
                 map.createFromObjects('zombieSpawns', {
@@ -327,6 +352,7 @@
                 this.input.keyboard.on('keyup-F', function (event) {
                     coins.children.iterate(function (child) {
                         child.disableBody(true, true);
+                        score++;
                     });
                     enableSpawn();
                     this.input.keyboard.stopListeners();
@@ -477,9 +503,26 @@
             zombieSpeed += 5;
             nivel++;
 
-            coins.children.iterate(function (child) {
-                child.enableBody(false, child.x, child.y, true, true);
-            });
+            if (coins.getLength() >= (numbcoins - nivel)) {
+                coins.children.iterate(function (child) {
+                    child.enableBody(false, child.x, child.y, true, true);
+                });
+                if (coins.getLength() - (numbcoins - nivel) <= maxCoins) {
+                    count = spawn(numbcoins - nivel, coins);
+                } else {
+                    count = spawn(coins.getLength() - maxCoins, coins);
+                }
+            }
+            if (bombs.getLength() >= (numbbombs - nivel)) {
+                bombs.children.iterate(function (child) {
+                    child.enableBody(false, child.x, child.y, true, true);
+                });
+                if (bombs.getLength() - (numbbombs - nivel) <= maxBombs) {
+                    count = spawn(numbbombs - nivel, bombs);
+                } else {
+                    count = spawn(bombs.getLength() - maxBombs, bombs);
+                }
+            }
 
             playerSpawn.disableBody(true, true);
             textCongrats.setText([""]);
@@ -487,6 +530,8 @@
 
         }
 
+
+        let numberr
         function spawn(number, sprite) {
             let i = 0;
             let enemyshow;
