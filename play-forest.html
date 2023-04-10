@@ -81,7 +81,10 @@
 
     let velocidadeIdle=200;//velocidade idle
     let velocidadeZombie=150;//velocidade zombie
+
+
     let maxZombies=20;
+    let cursors;
 
 
 
@@ -179,7 +182,7 @@
             repeat: -1
         });
         this.physics.add.collider(idle, avoidLayer);
-        idle.body.setAllowDrag(true).setDrag(550,550).setFriction(0,0);
+        //idle.body.setAllowDrag(true).setDrag(550,550).setFriction(0,0);
 
         //zombie
         enemy = this.physics.add.group(
@@ -256,8 +259,7 @@
             child.setAlpha(0.0001);
         });
 
-
-        this.cursorKeys = this.input.keyboard.createCursorKeys();
+        cursors = this.input.keyboard.createCursorKeys();
 
         retangulo = this.add.graphics();
         retangulo.fillStyle(0x000000, 1);
@@ -336,29 +338,7 @@
     }
     function update() {
         if(!gameover) {
-            if (this.cursorKeys.left.isDown) {
-                idle.setVelocityX(-velocidadeIdle);
-                idle.setVelocityY(0);
-                idle.flipX = true;
-                idle.anims.play('right', true);
-            } else if (this.cursorKeys.right.isDown) {
-                idle.setVelocityX(velocidadeIdle);
-                idle.setVelocityY(0);
-                idle.flipX = false;
-                idle.anims.play('right', true);
-            } else if (this.cursorKeys.up.isDown) {
-                idle.setVelocityY(-velocidadeIdle);
-                idle.setVelocityX(0);
-                idle.anims.play('turn', true);
-            } else if (this.cursorKeys.down.isDown) {
-                idle.setVelocityY(velocidadeIdle);
-                idle.setVelocityX(0);
-                idle.anims.play('walk', true);
-            } else {
-                idle.setVelocityX(0);
-                idle.setVelocityY(0);
-                idle.anims.stop();
-            }
+            movePlayer();
         }else {
             idle.disableBody(true, true);
             retangulo1 = this.add.graphics();
@@ -377,7 +357,34 @@
         }
     }
 
+    function movePlayer() {
+        var speedX = 0, speedY = 0
+        var speed = velocidadeIdle;
+        if (cursors.up.isDown) speedY -= speed;
+        if (cursors.down.isDown) speedY += speed;
+        if (cursors.left.isDown) speedX -= speed;
+        if (cursors.right.isDown) speedX += speed;
 
+        if (speedY < 0) {
+            idle.anims.play('turn', true);
+        } else if (speedY > 0) {
+            idle.anims.play('walk', true);
+        } else if (speedX < 0) {
+            idle.flipX = true;
+            idle.anims.play('right', true);
+        } else if (speedX > 0) {
+            idle.flipX = false;
+            idle.anims.play('right', true);
+        } else {
+            idle.anims.stop();
+        }
+
+        if (speedX != 0 && speedY != 0) {
+            speedX = speedX * 0.8;
+            speedY = speedY * 0.8;
+        }
+        idle.setVelocity(speedX, speedY);
+    }
     function losezombie(zombie,layer) {
         zombie.x=zombie.x-80;
         zombie.y=zombie.y+430;
@@ -487,27 +494,45 @@
         if(nivel%2===0){
             numblives++;
             lives.setText(['lives: '+numblives]);
+            coins.children.iterate(function (child) {
+                child.enableBody(false, child.x, child.y, true, true);
+            });
+            count = spawn(numbcoins - nivel, coins);
+            enemy.children.iterate(function (child) {
+                child.enableBody(false, child.x, child.y, true, true);
+            });
+            if(enemy.getLength()-(numbenemy-nivel)<=maxZombies) {
+                count = spawn(numbenemy - nivel, enemy);
+            }else{
+                count = spawn(enemy.getLength()-maxZombies, enemy);
+            }
+            bombs.children.iterate(function (child) {
+                child.enableBody(false, child.x, child.y, true, true);
+            });
+            count=spawn(numbbombs-nivel, bombs);
+            walkzombies(enemy);
+            nivel++;
         }
         else {
             nivel++;
+            coins.children.iterate(function (child) {
+                child.enableBody(false, child.x, child.y, true, true);
+            });
+            count = spawn(numbcoins - nivel, coins);
+            enemy.children.iterate(function (child) {
+                child.enableBody(false, child.x, child.y, true, true);
+            });
+            if(enemy.getLength()-(numbenemy-nivel)<=maxZombies) {
+                count = spawn(numbenemy - nivel, enemy);
+            }else{
+                count = spawn(enemy.getLength()-maxZombies, enemy);
+            }
+            bombs.children.iterate(function (child) {
+                child.enableBody(false, child.x, child.y, true, true);
+            });
+            count=spawn(numbbombs-nivel, bombs);
+            walkzombies(enemy);
         }
-        coins.children.iterate(function (child) {
-            child.enableBody(false, child.x, child.y, true, true);
-        });
-        count = spawn(numbcoins - nivel, coins);
-        enemy.children.iterate(function (child) {
-            child.enableBody(false, child.x, child.y, true, true);
-        });
-        if(enemy.getLength()-(numbenemy-nivel)<=maxZombies) {
-            count = spawn(numbenemy - nivel, enemy);
-        }else{
-            count = spawn(enemy.getLength()-maxZombies, enemy);
-        }
-        bombs.children.iterate(function (child) {
-            child.enableBody(false, child.x, child.y, true, true);
-        });
-        count=spawn(numbbombs-nivel, bombs);
-        walkzombies(enemy);
         orb.disableBody(true, true);
         orbtext.disableBody(true, true);
         text.setText([""]);
