@@ -23,7 +23,7 @@
         var config = {
             type: Phaser.CANVAS,
             width: 800,
-            height: 670,
+            height: 700,
             physics: {
                 default: 'arcade',
                 arcade: {
@@ -49,26 +49,38 @@
         //0 - o objeto em si
         //1 - a velocidade máxima do jogador
         const basePlayerSpeed = 160;
-        const basePlayerDecceleration = 550;
+        const basePlayerDecceleration = 900;
         var playerSpawn;
         var cursors;
 
         var zombies;
         const baseZombieSpeed = 40;
         var zombieSpeed = baseZombieSpeed;
-        var landmines;
+        var bombs;
         var coins;
         var exits;
         var helps;
+        const maxZombies = 68
+        const maxBombs = 32
+        const maxCoins = 20
+        var nivel = 0
 
         var cameraMain;
         var cameraHud;
-        const maxHearts = 5;
-        var hearts = maxHearts;
-        var coinsRemaining;
-        var coinsCollected = 0;
+        const maxLives = 5;
+        var lives = maxLives;
+        var score = 0;
 
         var gameOver = false;
+
+        var gameinfo
+        var textScore
+        var textLives
+        var textCongrats
+        var iconHeart
+        var iconOrb
+        var iconCoin
+
         var text;
         var rect;
 
@@ -80,12 +92,15 @@
             this.load.image('tiles', 'assetsmapa2/sprites/textures32.png');
             this.load.tilemapTiledJSON('mapa2', 'assetsmapa2/mapa2.json');
             this.load.image('twink', 'assetsmapa2/sprites/twink.png')
-            this.load.image('orb', 'assetsmapa2/sprites/orb.png')
             this.load.spritesheet('coin', 'assetsmapa2/sprites/coin.png', { frameWidth: 16 })
             this.load.image('bomb', 'assetsmapa2/sprites/bomb.png');
             this.load.spritesheet('human', 'assetsmapa2/spritesheets/2 walk.png', { frameWidth: 16, frameHeight: 16 })
             this.load.spritesheet('dead-player', 'assetsmapa2/spritesheets/3 idle.png', { frameWidth: 16, frameHeight: 16 })
             this.load.spritesheet('zombie', 'assetsmapa2/spritesheets/4 walk.png', { frameWidth: 16, frameHeight: 16 })
+
+            this.load.image('heart', 'assetsmapa1/diogocoins/heart.png');
+            this.load.image('orb', 'assetsmapa1/diogocoins/orb-blue1.png');
+
             this.load.audio('getCoin', 'assetsmapa2/sounds/grab_coin.mp3');
             this.load.audio('hitLight', 'assetsmapa2/sounds/hit_light.mp3');
             this.load.audio('hitHeavy', 'assetsmapa2/sounds/hit_heavy.mp3');
@@ -101,6 +116,8 @@
             sfxCoin = this.sound.add('getCoin');
             sfxHitLight = this.sound.add('hitLight');
             sfxHitHeavy = this.sound.add('hitHeavy');
+
+
 
             //vai buscar o spawn do ficheiro do mapa
             playerSpawn = this.physics.add.existing(
@@ -190,12 +207,12 @@
             })
 
 
-            landmines = this.physics.add.group(
-                map.createFromObjects('landmines', {
+            bombs = this.physics.add.group(
+                map.createFromObjects('bombs', {
                     key: 'bomb',
                     classType: Phaser.Physics.Arcade.Sprite
                 }));
-            this.physics.add.collider(player, landmines, hitLandmine);
+            this.physics.add.collider(player, bombs, hitBomb);
 
 
             this.physics.add.overlap(player, coins, collectCoin);
@@ -249,23 +266,37 @@
             })
 
 
+
+            iconOrb = this.physics.add.sprite(780, -11, "orb");
+            iconOrb.setVisible(false);
+            iconCoin = this.physics.add.sprite(132, -11, "coin");
+            iconCoin.play('spin');
+            iconHeart = this.add.image(258, -11, "heart");
+            iconHeart.setScale(0.8)
+
+            textScore = this.add.text(10, -20, 'score:', { fontSize: '16px Courier', fill: '#ffffff' });
+            textLives = this.add.text(200, -20, 'lives: 5', { fontSize: '16px Courier', fill: '#ffffff' });
+            textCongrats = this.add.text(590, -16.7, '', { fontSize: '11px Courier', fill: '#ffffff' });
+            gameinfo = this.add.group();
+            gameinfo.add(textScore);
+            gameinfo.add(textLives);
+            gameinfo.add(textCongrats);
+            gameinfo.add(iconHeart);
+            gameinfo.add(iconOrb);
+            gameinfo.add(iconCoin);
+
+
             cameraMain = this.cameras.main
-            cameraMain.setSize(800, 600);
-            cameraMain.setPosition(0, 70);
-            cameraMain.setBounds(0, 0, layer.width, layer.height);
+            cameraMain.setSize(800, 680);
+            cameraMain.setPosition(0, 20);
+            cameraMain.setBounds(0, 0, layer.width, layer.height + 20);
             cameraMain.startFollow(player[0], false, 1, 1);
             cameraMain.roundPixels = true;
-            //cameraMain.setZoom(0.5,0.5)
 
-            //    this.minimap = this.cameras.add(100, 100, 200, 200).setZoom(0.1).setName('mini');
-            //    this.minimap.setBackgroundColor(0x000000);
-            //    this.minimap.scrollX = 1600;
-            //    this.minimap.scrollY = 300;
+            cameraHud = this.cameras.add(0, 0, 800, 20).setScroll(0, -20).setName('hud');
 
-            cameraHud = this.cameras.add(0, 0, 800, 70).setScroll(0, -70).setName('hud');
-            text = this.add.text(4, -66, 'lorem ipsum', { font: '34px Courier', fill: '#fa0' });
-            rect = this.add.rectangle(0, -500, 800, 100, 0xbb0000).setScrollFactor(0).setDepth(10)
 
+            sfxCoin.play()
         }
 
         function update(time, delta) {
@@ -273,22 +304,13 @@
 
                 movePlayer()
 
-                coinsRemaining = coins.countActive(true)
-                if (coinsRemaining > 0) {
-                    text.setText([
-                        'vidas: ' + hearts,
-                        'moedas restantes: ' + coins.countActive(true)
-                    ]);
-                } else {
-                    text.setText([
-                        'vidas: ' + hearts,
-                        'Apanhaste todas! Volta ao centro!'
-                    ]);
-                }
+
+                textScore.setText(['score: ' + score]);
+                textLives.setText(['lives: ' + lives]);
 
                 //mais uma vida
                 this.input.keyboard.on('keyup-A', function (event) {
-                    hearts++
+                    lives++
                     this.input.keyboard.stopListeners();
                 });
                 //reset velocidade do jogador
@@ -305,19 +327,24 @@
                 this.input.keyboard.on('keyup-F', function (event) {
                     coins.children.iterate(function (child) {
                         child.disableBody(true, true);
-                        playerSpawn.enableBody(false, playerSpawn.x, playerSpawn.y, true, true)
                     });
+                    enableSpawn();
                     this.input.keyboard.stopListeners();
                 });
 
             } else {
-                rect.setPosition(400, 300)
-                text.setScrollFactor(0).setAlign('center').setPosition(400, 300).setColor('#fff').setDepth(20).setOrigin(0.5)
+                rect = this.add.graphics();
+                rect.fillStyle(0x000000, 1);
+                rect.fillRect(0, 300, map.widthInPixels, 100);
+                text = this.add.text(305, 315, '', { fontSize: '20px Courier', fill: '#ffffff' });
                 text.setText([
                     'GAME OVER',
-                    'Apanhaste ' + coinsCollected + ' moedas',
-                    '\'F5\' para começar de novo'
+                    'YOU CAUGHT ' + score + ' COINS',
+                    '\'F5\' TO START AGAIN'
                 ]);
+                text.setAlign('center');
+                text.setScrollFactor(0);
+                rect.setScrollFactor(0);
             }
         }
 
@@ -405,12 +432,18 @@
 
             coin.disableBody(true, true);
             if (coins.countActive(true) === 0) {
-                playerSpawn.enableBody(false, playerSpawn.x, playerSpawn.y, true, true)
+                enableSpawn()
             }
-            coinsCollected++
+            score++
         }
 
-        function hitLandmine(player, landmine) {
+        function enableSpawn() {
+            playerSpawn.enableBody(false, playerSpawn.x, playerSpawn.y, true, true)
+            textCongrats.setText(["CONGRATULATIONS! FIND THIS -> "]);
+            iconOrb.setVisible(true)
+        }
+
+        function hitBomb(player, landmine) {
             sfxHitLight.play();
 
             landmine.disableBody(true, true);
@@ -428,26 +461,64 @@
         }
 
         function takeDamage() {
-            hearts--;
-            if (hearts == -1) {
+            lives--;
+            if (lives == 0) {
                 gameOver = true;
-                player[0].disableBody(true,false)
+                player[0].disableBody(true, false)
                 player[0].play('player-zombie', true)
                 sfxHitHeavy.play();
             }
         }
 
         function reachSpawn(player, playerSpawn) {
+            sfxCoin.play()
             player[1] = basePlayerSpeed;
-            hearts++;
-            zombieSpeed += 5
-            if (coins.countActive(true) === 0) {
-                coins.children.iterate(function (child) {
+            lives++;
+            zombieSpeed += 5;
+            nivel++;
 
-                    child.enableBody(false, child.x, child.y, true, true);
+            coins.children.iterate(function (child) {
+                child.enableBody(false, child.x, child.y, true, true);
+            });
 
-                });
-                playerSpawn.disableBody(true, true);
+            playerSpawn.disableBody(true, true);
+            textCongrats.setText([""]);
+            iconOrb.setVisible(false);
+
+        }
+
+        function spawn(number, sprite) {
+            let i = 0;
+            let enemyshow;
+            let randomnumber;
+            let arraycheck = [];
+            let a;
+            numberr = number;
+            for (a = 0; a < numberr; a++) {
+                randomnumber = getRandomNumber(0, sprite.getLength());
+                if (!isInArray(randomnumber, arraycheck)) {
+                    enemyshow = sprite.getChildren()[randomnumber];
+                    enemyshow.disableBody(true, true);
+                    arraycheck.push(randomnumber);
+                    i++;
+                }
+            }
+            return i;
+        }
+        function getRandomNumber(min, max) {
+            return Math.floor(Math.random() * (max - min) + min);
+        }
+        function isInArray(randomnumber, arraycheck) {
+            if (arraycheck.length === 0) {
+                return false;
+            } else {
+                for (let c = 0; c < arraycheck.length; c++) {
+                    if (randomnumber === arraycheck[c]) {
+                        numberr++;
+                        return true;
+                    }
+                }
+                return false;
             }
         }
 
